@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from llama_index.core.base.llms.types import ChatMessage
 from llama_index.core.llms.llm import LLM
@@ -57,6 +57,59 @@ class BaseMemory(BaseComponent):
     @abstractmethod
     def reset(self) -> None:
         """Reset chat history."""
+
+
+class LongTermMemory(BaseComponent):
+    """Abstract base class for long-term memory implementations.
+
+    Designed for persistent, potentially large-scale memory stores that
+    might not fit entirely in RAM.
+    """
+
+    @classmethod
+    def class_name(cls) -> str:
+        return "LongTermMemory"
+
+    @classmethod
+    @abstractmethod
+    def from_defaults(cls, **kwargs: Any) -> "LongTermMemory":
+        """Create a long-term memory instance from default parameters."""
+
+    @abstractmethod
+    def add_message(self, message: ChatMessage, conversation_id: str, timestamp: float) -> None:
+        """Adds a node to the store with associated conversation ID and timestamp."""
+
+    @abstractmethod
+    def get_recent_memories(
+        self,
+        conversation_id: str,
+        before_timestamp: float,
+        max_memories: int,
+        **kwargs: Any,
+    ) -> List[ChatMessage]:
+        """Retrieves most recent memories before a given timestamp for a conversation."""
+
+    @abstractmethod
+    def get_sorted_entries(
+        self,
+        conversation_id: str,
+        filter_clause: Optional[str] = None,
+        max_entries: int = 10,
+        **kwargs: Any,
+    ) -> List[Tuple[ChatMessage, float]]:
+        """Retrieves sorted entries based on a filter clause and max entries."""
+
+    @abstractmethod
+    def set_messages(self, conversation_id: str, messages: List[ChatMessage]) -> None:
+        """Overwrites the messages for a given conversation."""
+
+    @abstractmethod
+    def get_messages(self, conversation_id: str, **kwargs: Any) -> List[ChatMessage]:
+        """Retrieves messages associated with a specific conversation."""
+
+    @abstractmethod
+    def reset(self, conversation_id: str) -> None:
+        """Resets the memory for a given conversation."""
 
 
 class BaseChatStoreMemory(BaseMemory):
